@@ -1,0 +1,10 @@
+# Pasta de build do Maven (gerada automaticamente com "mvn package")
+target/
+
+# Banco de dados SQLite (gerado automaticamente ao rodar a API)
+gym.db
+
+# Arquivos de IDE
+.vscode/
+.idea/
+*.iml
