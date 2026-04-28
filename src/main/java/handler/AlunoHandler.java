@@ -37,7 +37,7 @@ public class AlunoHandler implements HttpHandler {
 
         try {
             // rota de desconto: /api/aluno/desempenho/{id}/{meses}
-            if (metodo.equals("POST") && caminho.contains("/desempenho/")) {
+            if (metodo.equals("GET") && caminho.contains("/desempenho/")) {
                 int id    = Integer.parseInt(partes[partes.length - 2]);
                 int meses = Integer.parseInt(partes[partes.length - 1]);
                 calcularDesconto(troca, id, meses);
@@ -75,10 +75,6 @@ public class AlunoHandler implements HttpHandler {
 
     private void listar(HttpExchange troca) throws Exception {
         List<Aluno> alunos = service.listar();
-        if (alunos.isEmpty()) {
-            enviar(troca, 404, "{\"mensagem\": \"nenhum aluno encontrado\"}");
-            return;
-        }
         enviar(troca, 200, mapper.writeValueAsString(alunos));
     }
 

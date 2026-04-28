@@ -37,7 +37,7 @@ public class AlunoService {
         if (aluno.getEmail() == null || aluno.getEmail().isBlank()) {
             throw new IllegalArgumentException("o email e obrigatorio.");
         }
-        if (!aluno.getEmail().contains("@")) {
+        if (!aluno.getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new IllegalArgumentException("formato de email invalido.");
         }
         if (aluno.getPlanoId() == null) {
@@ -60,14 +60,18 @@ public class AlunoService {
 
     // calcula o desconto no plano do aluno com base nos meses de frequencia
     public Map<String, Object> calcularDesconto(int alunoId, int meses) throws SQLException {
-        if (meses < 0) {
+        if (meses <= 0) {
             throw new IllegalArgumentException("a quantidade de meses deve ser maior que 0.");
         }
 
         Aluno aluno = buscarPorId(alunoId);
         Plano plano = aluno.getPlano();
 
-        double desconto = calcularPercentual(plano.getId(), meses);
+        if (plano == null) {
+            throw new IllegalArgumentException("o aluno nao possui um plano ativo.");
+        }
+
+        double desconto = calcularPercentual(plano.getNome(), meses);
         double valorOriginal = plano.getPreco();
         double valorComDesconto = valorOriginal * (1 - desconto);
 
@@ -83,14 +87,17 @@ public class AlunoService {
         return resultado;
     }
 
-    // plano 2 (vip):      3+ meses 5%   6+ meses 10%  10+ meses 15%
-    // plano 3 (vip plus): 2+ meses 8%   6+ meses 14%  10+ meses 20%
-    private double calcularPercentual(int planoId, int meses) {
-        if (planoId == 2) {
+    // regras por nome do plano (case-insensitive):
+    // VIP:      3+ meses 5%   6+ meses 10%  10+ meses 15%
+    // VIP PLUS: 2+ meses 8%   6+ meses 14%  10+ meses 20%
+    private double calcularPercentual(String nomeDoPlano, int meses) {
+        if (nomeDoPlano == null) return 0;
+        String nome = nomeDoPlano.trim().toUpperCase();
+        if (nome.equals("VIP")) {
             if (meses >= 10) return 0.15;
             if (meses >= 6)  return 0.10;
             if (meses >= 3)  return 0.05;
-        } else if (planoId == 3) {
+        } else if (nome.equals("VIP PLUS")) {
             if (meses >= 10) return 0.20;
             if (meses >= 6)  return 0.14;
             if (meses >= 2)  return 0.08;

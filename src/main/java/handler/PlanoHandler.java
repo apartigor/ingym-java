@@ -67,10 +67,6 @@ public class PlanoHandler implements HttpHandler {
 
     private void listar(HttpExchange troca) throws Exception {
         List<Plano> planos = service.listar();
-        if (planos.isEmpty()) {
-            enviar(troca, 404, "{\"mensagem\": \"nenhum plano encontrado\"}");
-            return;
-        }
         enviar(troca, 200, mapper.writeValueAsString(planos));
     }
 

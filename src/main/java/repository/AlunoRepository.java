@@ -116,20 +116,25 @@ public class AlunoRepository {
 
     // monta um objeto Aluno com o Plano aninhado a partir do resultado do join
     private Aluno mapearAluno(ResultSet rs) throws SQLException {
-        Plano plano = new Plano(
-            rs.getInt("plano_id"),
-            rs.getString("plano_nome"),
-            rs.getString("descricao"),
-            rs.getDouble("preco"),
-            rs.getString("plano_criado_em")
-        );
+        int planoId = rs.getInt("plano_id");
+        boolean semPlano = rs.wasNull();
+        Plano plano = null;
+        if (!semPlano) {
+            plano = new Plano(
+                planoId,
+                rs.getString("plano_nome"),
+                rs.getString("descricao"),
+                rs.getDouble("preco"),
+                rs.getString("plano_criado_em")
+            );
+        }
 
         return new Aluno(
             rs.getInt("id"),
             rs.getString("nome"),
             rs.getString("email"),
             rs.getString("criado_em"),
-            rs.getInt("plano_id"),
+            semPlano ? null : planoId,
             plano
         );
     }
