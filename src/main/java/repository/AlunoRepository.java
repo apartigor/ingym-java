@@ -72,7 +72,7 @@ public class AlunoRepository {
 
             ResultSet chaves = stmt.getGeneratedKeys();
             if (chaves.next()) {
-                aluno.setId(chaves.getInt(1));
+                return buscarPorId(chaves.getInt(1));
             }
         }
         return aluno;

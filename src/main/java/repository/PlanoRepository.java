@@ -58,7 +58,7 @@ public class PlanoRepository {
 
             ResultSet chaves = stmt.getGeneratedKeys();
             if (chaves.next()) {
-                plano.setId(chaves.getInt(1));
+                return buscarPorId(chaves.getInt(1));
             }
         }
         return plano;

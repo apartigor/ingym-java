@@ -38,8 +38,11 @@ public class PlanoService {
     }
 
     public Plano atualizar(int id, Plano plano) throws SQLException {
-        buscarPorId(id);
-        return repositorio.atualizar(id, plano);
+        Plano existente = buscarPorId(id);
+        if (plano.getNome() != null && !plano.getNome().isBlank()) existente.setNome(plano.getNome());
+        if (plano.getDescricao() != null) existente.setDescricao(plano.getDescricao());
+        if (plano.getPreco() != null && plano.getPreco() > 0) existente.setPreco(plano.getPreco());
+        return repositorio.atualizar(id, existente);
     }
 
     public void deletar(int id) throws SQLException {
