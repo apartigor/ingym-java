@@ -1,29 +1,38 @@
 package model;
 
-// cada aluno esta vinculado a um plano pelo planoId
 public class Aluno {
 
     private Integer id;
     private String nome;
     private String email;
     private String criadoEm;
-    private Integer planoId;  // chave estrangeira pro plano
-    private Plano plano;      // objeto do plano, preenchido nas buscas
+    private Integer planoId;
+    private Plano plano;
 
-    // construtor vazio necessario pro jackson
+    // campos preenchidos automaticamente pela consulta ao ViaCEP
+    private String cep;
+    private String logradouro;
+    private String bairro;
+    private String cidade;
+    private String uf;
+
     public Aluno() {}
 
-    // construtor completo usado quando montamos o objeto com dados do banco
-    public Aluno(Integer id, String nome, String email, String criadoEm, Integer planoId, Plano plano) {
+    public Aluno(Integer id, String nome, String email, String criadoEm, Integer planoId, Plano plano,
+                 String cep, String logradouro, String bairro, String cidade, String uf) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.criadoEm = criadoEm;
         this.planoId = planoId;
         this.plano = plano;
+        this.cep = cep;
+        this.logradouro = logradouro;
+        this.bairro = bairro;
+        this.cidade = cidade;
+        this.uf = uf;
     }
 
-    // getters e setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -41,4 +50,19 @@ public class Aluno {
 
     public Plano getPlano() { return plano; }
     public void setPlano(Plano plano) { this.plano = plano; }
+
+    public String getCep() { return cep; }
+    public void setCep(String cep) { this.cep = cep; }
+
+    public String getLogradouro() { return logradouro; }
+    public void setLogradouro(String logradouro) { this.logradouro = logradouro; }
+
+    public String getBairro() { return bairro; }
+    public void setBairro(String bairro) { this.bairro = bairro; }
+
+    public String getCidade() { return cidade; }
+    public void setCidade(String cidade) { this.cidade = cidade; }
+
+    public String getUf() { return uf; }
+    public void setUf(String uf) { this.uf = uf; }
 }

@@ -2,20 +2,20 @@ import com.sun.net.httpserver.HttpServer;
 import config.ConnectionFactory;
 import handler.AlunoHandler;
 import handler.PlanoHandler;
+import messaging.AlunoConsumer;
 
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.Statement;
 
-// classe principal que sobe o servidor e registra as rotas
 public class ApiServer {
 
     public static void main(String[] args) throws Exception {
         inicializarBanco();
+        iniciarConsumer();
 
         HttpServer servidor = HttpServer.create(new InetSocketAddress(5290), 0);
 
-        // cada contexto redireciona pro handler correto
         servidor.createContext("/api/plano", new PlanoHandler());
         servidor.createContext("/api/aluno", new AlunoHandler());
 
@@ -25,7 +25,6 @@ public class ApiServer {
         System.out.println("API rodando em http://localhost:5290");
     }
 
-    // cria as tabelas no banco se ainda nao existirem
     private static void inicializarBanco() throws Exception {
         try (Connection con = ConnectionFactory.getConnection();
              Statement stmt = con.createStatement()) {
@@ -51,7 +50,28 @@ public class ApiServer {
                 )
                 """);
 
+            for (String coluna : new String[]{
+                "ADD COLUMN cep        TEXT",
+                "ADD COLUMN logradouro TEXT",
+                "ADD COLUMN bairro     TEXT",
+                "ADD COLUMN cidade     TEXT",
+                "ADD COLUMN uf         TEXT"
+            }) {
+                try {
+                    stmt.execute("ALTER TABLE alunos " + coluna);
+                } catch (Exception ignored) {
+
+                }
+            }
+
             System.out.println("banco inicializado (gym.db)");
         }
+    }
+
+    // sobe o consumer do RabbitMQ em uma thread separada (nao bloqueia a API)
+    private static void iniciarConsumer() {
+        Thread consumer = new Thread(new AlunoConsumer());
+        consumer.setDaemon(true);
+        consumer.start();
     }
 }

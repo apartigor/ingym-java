@@ -1,7 +1,9 @@
 package service;
 
 import exception.EntidadeNaoEncontradaException;
+import messaging.AlunoProducer;
 import model.Aluno;
+import model.EnderecoViaCep;
 import model.Plano;
 import repository.AlunoRepository;
 
@@ -10,12 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// camada de regras de negocio do aluno
-// tambem contem o calculo de desconto por desempenho
 public class AlunoService {
 
     private final AlunoRepository repositorio = new AlunoRepository();
     private final PlanoService planoService = new PlanoService();
+    private final ViaCepService viaCepService = new ViaCepService();
+    private final AlunoProducer producer = new AlunoProducer();
 
     public List<Aluno> listar() throws SQLException {
         return repositorio.listar();
@@ -29,7 +31,6 @@ public class AlunoService {
         return aluno;
     }
 
-    // valida os campos e checa se o plano existe antes de salvar
     public Aluno criar(Aluno aluno) throws SQLException {
         if (aluno.getNome() == null || aluno.getNome().isBlank()) {
             throw new IllegalArgumentException("o nome do aluno e obrigatorio.");
@@ -44,12 +45,39 @@ public class AlunoService {
             throw new IllegalArgumentException("o plano e obrigatorio.");
         }
         planoService.buscarPorId(aluno.getPlanoId());
-        return repositorio.salvar(aluno);
+
+        // se o aluno informou um CEP, consulta o ViaCEP e preenche o endereco automaticamente
+        if (aluno.getCep() != null && !aluno.getCep().isBlank()) {
+            EnderecoViaCep endereco = viaCepService.buscarEndereco(aluno.getCep());
+            aluno.setCep(endereco.getCep());
+            aluno.setLogradouro(endereco.getLogradouro());
+            aluno.setBairro(endereco.getBairro());
+            aluno.setCidade(endereco.getLocalidade());
+            aluno.setUf(endereco.getUf());
+        }
+
+        Aluno criado = repositorio.salvar(aluno);
+
+        // publica mensagem assincrona na fila do RabbitMQ apos o cadastro
+        String mensagem = String.format("Bem-vindo, %s! Seu plano foi ativado com sucesso.", criado.getNome());
+        producer.publicar(mensagem);
+
+        return criado;
     }
 
     public Aluno atualizar(int id, Aluno aluno) throws SQLException {
         buscarPorId(id);
         planoService.buscarPorId(aluno.getPlanoId());
+
+        if (aluno.getCep() != null && !aluno.getCep().isBlank()) {
+            EnderecoViaCep endereco = viaCepService.buscarEndereco(aluno.getCep());
+            aluno.setCep(endereco.getCep());
+            aluno.setLogradouro(endereco.getLogradouro());
+            aluno.setBairro(endereco.getBairro());
+            aluno.setCidade(endereco.getLocalidade());
+            aluno.setUf(endereco.getUf());
+        }
+
         return repositorio.atualizar(id, aluno);
     }
 
@@ -75,7 +103,6 @@ public class AlunoService {
         double valorOriginal = plano.getPreco();
         double valorComDesconto = valorOriginal * (1 - desconto);
 
-        // monta o resultado usando Map (estrutura chave valor)
         Map<String, Object> resultado = new HashMap<>();
         resultado.put("aluno", aluno.getNome());
         resultado.put("plano", plano.getNome());
@@ -87,7 +114,6 @@ public class AlunoService {
         return resultado;
     }
 
-    // regras por nome do plano (case-insensitive):
     // VIP:      3+ meses 5%   6+ meses 10%  10+ meses 15%
     // VIP PLUS: 2+ meses 8%   6+ meses 14%  10+ meses 20%
     private double calcularPercentual(String nomeDoPlano, int meses) {
